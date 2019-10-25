@@ -8,18 +8,24 @@ class App extends Component {
         this.open = this.open.bind(this);
         this.close = this.close.bind(this);
         this.clear = this.clear.bind(this);
+        this.urlChange = this.urlChange.bind(this);
+        this.requestChange = this.requestChange.bind(this);
+        this.sendRequest = this.sendRequest.bind(this);
     }
 
     ws = null;
     state = {
-        url: "ws://localhost:8081/websocket/private?id=91429948",
+        url: 'ws://localhost:8081/websocket/private?id=91429948',
+        // url: 'wss://chronos.omegasys.eu/websocket/channel/20',
+        // url: 'ws://localhost:8081/websocket/channel/40',
         wsOpen: false,
-        data: []
+        data: [],
+        request: ""
     };
 
     open() {
         if (this.state.url) {
-            console.log("connecting: " + this.state.url);
+            console.log('connecting: ' + this.state.url);
             this.ws = new WebSocket(this.state.url);
             this.setState({
                 wsOpen: true
@@ -56,8 +62,32 @@ class App extends Component {
         })
     }
 
-    onChange() {
+    urlChange(event) {
+        this.setState({
+            url: event.target.value
+        });
+    }
 
+    requestChange(event) {
+        this.setState({
+            request: event.target.value
+        });
+    }
+
+    sendRequest() {
+        const obj = this.state.request;
+        console.log(obj);
+
+        /**
+         * E.g.,  {action: "ID", language: "en"}
+         */
+        if (this.ws) {
+            try {
+                this.ws.send(JSON.stringify(obj))
+            } catch (error) {
+                console.log(error)
+            }
+        }
     }
 
     render() {
@@ -67,8 +97,7 @@ class App extends Component {
                     <fieldset>
                         <legend>URL</legend>
                         <div>
-                            <input type="text" id="serverUrl" value={this.state.url} width="500px"
-                                   onChange={this.onChange}/>
+                            <input type="text" id="serverUrl" value={this.state.url} onChange={this.urlChange} width="500px"/>
                             <button onClick={this.open} disabled={this.state.wsOpen}>Open</button>
                             <button onClick={this.close} disabled={!this.state.wsOpen}>Close</button>
                         </div>
@@ -81,11 +110,10 @@ class App extends Component {
                     <fieldset id="requestArea">
                         <legend>Request</legend>
                         <div>
-                            <textarea id="sendMessage" disabled="disabled"></textarea>
+                            <textarea id="sendMessage" disabled={!this.state.wsOpen} value={this.state.request} onChange={this.requestChange}></textarea>
                         </div>
                         <div>
-                            <button id="sendButton" disabled="disabled">Send</button>
-                            [Ctrl + Enter]
+                            <button id="sendButton" disabled={!this.state.wsOpen || this.state.request === ""} onClick={this.sendRequest}>Send</button>
                         </div>
                     </fieldset>
                     <fieldset id="messageArea">
